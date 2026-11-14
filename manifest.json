@@ -1,0 +1,168 @@
+{
+  "formatVersion": 1,
+  "generatedAtUtc": "2026-11-14T21:08:39.148Z",
+  "archiveStartUtc": "2026-01-01T00:00:00.000Z",
+  "latestSupportedStartUtc": "2030-12-31T23:00:00.000Z",
+  "ephemerisEndUtc": "2031-01-03T00:00:00.000Z",
+  "sampleIntervalMinutes": 60,
+  "dataStatus": "verified-archived",
+  "sourceDescription": "Original NASA/JPL Horizons DE441 observer ephemerides and original NASA PDS LRO LOLA 40 m DEM samples. Scientific outputs are unavailable outside these archived sites and dates.",
+  "imageSide": 7584,
+  "recordBytes": 30336,
+  "imageBytes": 230068224,
+  "sites": [
+    {
+      "id": "shackleton",
+      "name": "Shackleton Rim",
+      "latitudeDeg": -89.9,
+      "longitudeDeg": 0,
+      "longitudeEastDeg": 0,
+      "ephemeris": {
+        "file": "ephemeris/shackleton.bin",
+        "rows": 43873,
+        "format": "int32-le-microdegrees",
+        "columns": [
+          "sun_azimuth_deg",
+          "sun_elevation_deg",
+          "earth_azimuth_deg",
+          "earth_elevation_deg"
+        ],
+        "sha256": "7c0866bd3f603a4b4459ea8b9d4074ef646931559dd2f8ff9049a501c356a45d",
+        "source": "NASA/JPL Horizons API",
+        "ephemeris": "DE441",
+        "sourceUrl": "https://ssd.jpl.nasa.gov/api/horizons.api",
+        "query": {
+          "center": "coord@301",
+          "coordinateType": "geodetic",
+          "longitudeEastDeg": 0,
+          "latitudeDeg": -89.9,
+          "startUtc": "2026-01-01T00:00:00.000Z",
+          "endUtc": "2031-01-03T00:00:00.000Z",
+          "interval": "1 h",
+          "targets": {
+            "sun": "10",
+            "earth": "399"
+          }
+        }
+      },
+      "terrain": {
+        "file": "lola/shackleton.bin",
+        "width": 601,
+        "height": 601,
+        "firstRow": 3416,
+        "firstColumn": 3492,
+        "format": "float32-le-kilometers",
+        "source": "NASA PDS Geosciences Node · LRO LOLA",
+        "product": "LDEM_85S_40M_FLOAT",
+        "sourceUrl": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/float_img/ldem_85s_40m_float.lbl",
+        "imageUrl": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/float_img/ldem_85s_40m_float.img",
+        "resolutionM": 40,
+        "referenceRadiusM": 1737400,
+        "tileMarginM": 12000,
+        "sha256": "1ff5cbb29d338980b8efc31a37e795e981950e56b70b20b85ed3c705a9139079"
+      }
+    },
+    {
+      "id": "malapert",
+      "name": "Malapert Massif",
+      "latitudeDeg": -85.99,
+      "longitudeDeg": 0,
+      "longitudeEastDeg": 0,
+      "ephemeris": {
+        "file": "ephemeris/malapert.bin",
+        "rows": 43873,
+        "format": "int32-le-microdegrees",
+        "columns": [
+          "sun_azimuth_deg",
+          "sun_elevation_deg",
+          "earth_azimuth_deg",
+          "earth_elevation_deg"
+        ],
+        "sha256": "29a4a3fb40d566b40e13d0057f621385fb41b52f9364293142fe19c6849b806d",
+        "source": "NASA/JPL Horizons API",
+        "ephemeris": "DE441",
+        "sourceUrl": "https://ssd.jpl.nasa.gov/api/horizons.api",
+        "query": {
+          "center": "coord@301",
+          "coordinateType": "geodetic",
+          "longitudeEastDeg": 0,
+          "latitudeDeg": -85.99,
+          "startUtc": "2026-01-01T00:00:00.000Z",
+          "endUtc": "2031-01-03T00:00:00.000Z",
+          "interval": "1 h",
+          "targets": {
+            "sun": "10",
+            "earth": "399"
+          }
+        }
+      },
+      "terrain": {
+        "file": "lola/malapert.bin",
+        "width": 601,
+        "height": 601,
+        "firstRow": 450,
+        "firstColumn": 3492,
+        "format": "float32-le-kilometers",
+        "source": "NASA PDS Geosciences Node · LRO LOLA",
+        "product": "LDEM_85S_40M_FLOAT",
+        "sourceUrl": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/float_img/ldem_85s_40m_float.lbl",
+        "imageUrl": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/float_img/ldem_85s_40m_float.img",
+        "resolutionM": 40,
+        "referenceRadiusM": 1737400,
+        "tileMarginM": 12000,
+        "sha256": "96dfef6df2f258d5f345f0dba95adaa7a43d0ac82fd31e185015685441e2003f"
+      }
+    },
+    {
+      "id": "connecting",
+      "name": "Connecting Ridge",
+      "latitudeDeg": -89.5,
+      "longitudeDeg": 222,
+      "longitudeEastDeg": 222,
+      "ephemeris": {
+        "file": "ephemeris/connecting.bin",
+        "rows": 43873,
+        "format": "int32-le-microdegrees",
+        "columns": [
+          "sun_azimuth_deg",
+          "sun_elevation_deg",
+          "earth_azimuth_deg",
+          "earth_elevation_deg"
+        ],
+        "sha256": "ffd335b7ab629c9ac4d93a6a3cc901d9f56905958db5088746cd6df2fc6ff141",
+        "source": "NASA/JPL Horizons API",
+        "ephemeris": "DE441",
+        "sourceUrl": "https://ssd.jpl.nasa.gov/api/horizons.api",
+        "query": {
+          "center": "coord@301",
+          "coordinateType": "geodetic",
+          "longitudeEastDeg": -138,
+          "latitudeDeg": -89.5,
+          "startUtc": "2026-01-01T00:00:00.000Z",
+          "endUtc": "2031-01-03T00:00:00.000Z",
+          "interval": "1 h",
+          "targets": {
+            "sun": "10",
+            "earth": "399"
+          }
+        }
+      },
+      "terrain": {
+        "file": "lola/connecting.bin",
+        "width": 601,
+        "height": 601,
+        "firstRow": 3773,
+        "firstColumn": 3238,
+        "format": "float32-le-kilometers",
+        "source": "NASA PDS Geosciences Node · LRO LOLA",
+        "product": "LDEM_85S_40M_FLOAT",
+        "sourceUrl": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/float_img/ldem_85s_40m_float.lbl",
+        "imageUrl": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/float_img/ldem_85s_40m_float.img",
+        "resolutionM": 40,
+        "referenceRadiusM": 1737400,
+        "tileMarginM": 12000,
+        "sha256": "993346562714cc8db9bfca7b02f4b8e0cc22060592b0a8da685077efbe42a65b"
+      }
+    }
+  ]
+}

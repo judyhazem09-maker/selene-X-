@@ -1,0 +1,10 @@
+{
+  "explorer.excludeGitIgnore": true,
+  "files.exclude": {
+    "**/.venv": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/__pycache__": true,
+    "**/.pytest_cache": true
+  }
+}

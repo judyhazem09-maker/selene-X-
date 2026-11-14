@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="Begin your LunaSight journey to the lunar south pole and explore mission planning tools.">
+<title>LunaSight | Mission to the Moon</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500&family=Manrope:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--fg:#f3efe8;--dim:#9a978f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);overflow:hidden;font-family:Manrope,system-ui,sans-serif}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+.hud{position:fixed;left:0;right:0;display:flex;justify-content:space-between;padding:0 clamp(14px,3vw,40px);font:500 clamp(10px,1.3vw,13px) ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;color:var(--dim);pointer-events:none}
+#top{top:calc(8.5% + env(safe-area-inset-top,0px))}
+#bot{bottom:calc(8.5% + env(safe-area-inset-bottom,0px));align-items:flex-end}
+#top b{font:300 clamp(11px,1.5vw,15px) Unbounded,sans-serif;color:var(--fg);letter-spacing:.2em}
+#cap{position:fixed;left:0;right:0;bottom:calc(17% + env(safe-area-inset-bottom,0px));text-align:center;padding:0 16px;font:300 clamp(16px,2.6vw,30px)/1.2 Unbounded,sans-serif;text-shadow:0 2px 18px #000;opacity:0;pointer-events:none}
+#cap.big{font-size:clamp(46px,10vw,110px)}
+nav{display:flex;gap:8px;pointer-events:auto}
+button{background:rgba(255,255,255,.07);color:var(--fg);border:1px solid rgba(255,255,255,.2);padding:8px 15px;font:500 12px Manrope,sans-serif;border-radius:999px;cursor:pointer;backdrop-filter:blur(8px)}
+button:hover{background:rgba(255,255,255,.16)}
+button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+button.hot{border-color:#f4c97a;background:rgba(244,201,122,.18)}
+button.hot:hover{background:rgba(244,201,122,.34)}
+@media(max-width:600px){#bot{bottom:calc(4% + env(safe-area-inset-bottom,0px));flex-direction:column;align-items:flex-start;gap:12px}#bot nav{align-self:flex-end}#tel{font-size:clamp(9px,2.4vw,11px)}#cap{bottom:calc(25% + env(safe-area-inset-bottom,0px))}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud" id="top"><b>MISSION · MOON</b><span id="clk"></span></div>
+<div id="cap"></div>
+<div class="hud" id="bot"><span id="tel"></span><nav><button class="hot" id="go" type="button">Start</button><button id="pz" type="button">Pause</button><button id="rp" type="button">Replay</button></nav></div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+const R=Math.random,gs=()=>R()+R()+R()-1.5,lerp=(a,b,t)=>a+(b-a)*t,cl=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),sm=x=>{x=cl(x);return x*x*(3-2*x)},PI2=Math.PI*2;
+let W,H,U,dpr;
+function fit(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);U=Math.min(W,H*1.15)}
+addEventListener('resize',fit);fit();
+
+const st=Array.from({length:520},()=>({x:R(),y:R(),z:.2+R()*.8,p:R()*6.28}));
+const eb=[...Array.from({length:70},()=>({a:R()*PI2,d:Math.sqrt(R())*.95,s:.04+R()*.13,c:R()<.75?'62,128,56,.95':'176,146,84,.85'})),...Array.from({length:110},()=>({a:R()*PI2,d:Math.sqrt(R())*1.0,s:.03+R()*.09,c:'255,255,255,.38'}))];
+const mc=Array.from({length:80},()=>({a:R()*PI2,d:Math.sqrt(R())*.92,s:.02+Math.pow(R(),2.5)*.16,m:R()<.14}));
+const gc=Array.from({length:50},()=>({x:R(),y:Math.pow(R(),1.6),s:.5+R()}));
+const clouds=Array.from({length:46},()=>({x:R()*1.4-.2,h:500+R()*8500,r:.6+R()*1.3}));
+const fire=[],puff=[];
+
+function stars(T,a,dy){
+  if(a<=0)return;ctx.globalCompositeOperation='lighter';
+  for(const s of st){const y=((s.y*H+dy*s.z)%H+H)%H;ctx.fillStyle=`rgba(210,225,255,${a*s.z*(.55+.45*Math.sin(T*2+s.p))})`;ctx.fillRect(s.x*W,y,.5+s.z*1.3,.5+s.z*1.3)}
+  ctx.globalCompositeOperation='source-over';
+}
+function sphere(x,y,r,pal,feat){
+  ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,PI2);ctx.clip();
+  let g=ctx.createRadialGradient(x-r*.45,y-r*.35,r*.05,x,y,r*1.05);
+  g.addColorStop(0,pal[0]);g.addColorStop(.55,pal[1]);g.addColorStop(1,pal[2]);ctx.fillStyle=g;ctx.fillRect(x-r,y-r,2*r,2*r);
+  feat(x,y,r);
+  g=ctx.createRadialGradient(x-r*.5,y-r*.4,r*.45,x,y,r*1.25);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.88)');
+  ctx.fillStyle=g;ctx.fillRect(x-r,y-r,2*r,2*r);ctx.restore();
+}
+function earth(x,y,r){
+  sphere(x,y,r,['#7cc2ff','#1c62b8','#05204a'],(x,y,r)=>{for(const b of eb){ctx.fillStyle=`rgba(${b.c})`;ctx.beginPath();ctx.arc(x+Math.cos(b.a)*b.d*r,y+Math.sin(b.a)*b.d*r,b.s*r,0,PI2);ctx.fill()}});
+  ctx.globalCompositeOperation='lighter';
+  const g=ctx.createRadialGradient(x,y,r*.97,x,y,r*1.09);g.addColorStop(0,'rgba(120,185,255,.6)');g.addColorStop(1,'rgba(120,185,255,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r*1.1,0,PI2);ctx.fill();ctx.globalCompositeOperation='source-over';
+}
+function moon(x,y,r){
+  sphere(x,y,r,['#e4e3df','#999893','#2a2a2c'],(x,y,r)=>{for(const c of mc){const cx=x+Math.cos(c.a)*c.d*r,cy=y+Math.sin(c.a)*c.d*r;ctx.fillStyle=c.m?'rgba(70,72,80,.45)':'rgba(60,60,66,.32)';ctx.beginPath();ctx.arc(cx,cy,c.s*r*(c.m?1.8:1),0,PI2);ctx.fill();if(!c.m){ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=Math.max(1,r*.006);ctx.beginPath();ctx.arc(cx-c.s*r*.1,cy-c.s*r*.1,c.s*r,0,PI2);ctx.stroke()}}});
+  ctx.globalCompositeOperation='lighter';
+  const g=ctx.createRadialGradient(x,y,r,x,y,r*1.25);g.addColorStop(0,'rgba(200,210,230,.18)');g.addColorStop(1,'rgba(200,210,230,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r*1.3,0,PI2);ctx.fill();ctx.globalCompositeOperation='source-over';
+}
+function emit(x,y,a,n,sp,u){for(let i=0;i<n;i++){const A=a+gs()*.22,v=sp*(.7+R()*.8);fire.push({x:x+gs()*u*.5,y,vx:-Math.sin(A)*v,vy:Math.cos(A)*v,l:1,d:.02+R()*.02,u})}}
+function drawFire(dt,ds=0){
+  const f60=dt*60;ctx.globalCompositeOperation='lighter';
+  for(let i=fire.length-1;i>=0;i--){const f=fire[i];f.x+=f.vx*f60;f.y+=f.vy*f60+ds*.3;f.l-=f.d*f60;f.vx*=.99;
+    if(f.l<=0){fire.splice(i,1);continue}
+    ctx.fillStyle=`rgba(255,${60+190*f.l*f.l|0},${20+140*f.l**3|0},${f.l*.55})`;ctx.beginPath();ctx.arc(f.x,f.y,f.u*(.15+.75*f.l),0,PI2);ctx.fill()}
+  ctx.globalCompositeOperation='source-over';
+}
+function drawPuff(dt,ds){
+  const f60=dt*60;
+  for(let i=puff.length-1;i>=0;i--){const p=puff[i];p.x+=p.vx*f60;p.y+=p.vy*f60+(p.w?ds:0);p.l-=p.d*f60;p.r*=1+(p.g-1)*f60;
+    if(p.l<=0){puff.splice(i,1);continue}
+    ctx.fillStyle=`rgba(${p.c},${p.l*p.a})`;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,PI2);ctx.fill()}
+}
+function rocket(cx,cy,u,a,legs){
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(a);
+  if(legs>0){ctx.strokeStyle='#a4abbd';ctx.lineWidth=u*.14;ctx.lineCap='round';
+    for(const s of[-1,1]){const fx=s*(.9+1.5*legs)*u,fy=(1.5+legs)*u;ctx.beginPath();ctx.moveTo(s*.9*u,1.5*u);ctx.lineTo(fx,fy);ctx.stroke();ctx.beginPath();ctx.moveTo(fx-.35*u,fy+.05*u);ctx.lineTo(fx+.35*u,fy+.05*u);ctx.stroke()}}
+  const fin=s=>{ctx.beginPath();ctx.moveTo(s*1.05*u,.5*u);ctx.lineTo(s*2.2*u,2.5*u);ctx.lineTo(s*1.05*u,1.95*u);ctx.closePath();
+    const f=ctx.createLinearGradient(s*u,0,s*2.2*u,0);f.addColorStop(0,'#e0462f');f.addColorStop(1,'#7e1b12');ctx.fillStyle=f;ctx.fill()};
+  fin(-1);fin(1);
+  ctx.fillStyle='#262a33';ctx.beginPath();ctx.moveTo(-.7*u,1.9*u);ctx.lineTo(.7*u,1.9*u);ctx.lineTo(.95*u,2.35*u);ctx.lineTo(-.95*u,2.35*u);ctx.fill();
+  const body=()=>{ctx.beginPath();ctx.moveTo(0,-3.4*u);ctx.quadraticCurveTo(1.35*u,-1.5*u,1.1*u,.2*u);ctx.lineTo(1.1*u,1.95*u);ctx.lineTo(-1.1*u,1.95*u);ctx.lineTo(-1.1*u,.2*u);ctx.quadraticCurveTo(-1.35*u,-1.5*u,0,-3.4*u);ctx.closePath()};
+  body();let g=ctx.createLinearGradient(-1.1*u,0,1.1*u,0);
+  g.addColorStop(0,'#7f889c');g.addColorStop(.3,'#fff');g.addColorStop(.65,'#cdd5e4');g.addColorStop(1,'#59627a');ctx.fillStyle=g;ctx.fill();
+  ctx.save();body();ctx.clip();
+  g=ctx.createLinearGradient(-1.1*u,0,1.1*u,0);g.addColorStop(0,'#a3281a');g.addColorStop(.3,'#ff6a4d');g.addColorStop(1,'#7e1b12');
+  ctx.fillStyle=g;ctx.fillRect(-2*u,-4*u,4*u,2.4*u);ctx.fillStyle='#e0462f';ctx.fillRect(-2*u,1.25*u,4*u,.35*u);ctx.restore();
+  ctx.fillStyle='#454d63';ctx.beginPath();ctx.arc(0,-.35*u,.62*u,0,PI2);ctx.fill();
+  g=ctx.createRadialGradient(-.15*u,-.55*u,0,0,-.35*u,.5*u);g.addColorStop(0,'#bfe6ff');g.addColorStop(.5,'#2f8fe0');g.addColorStop(1,'#0b2a55');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,-.35*u,.5*u,0,PI2);ctx.fill();ctx.restore();
+}
+
+/* ---- Act 1: launch, ascent, transit ---- */
+function space(T,dt){
+  const u=U/15,lt=Math.max(0,T-3),s=lt*lt*u*7,ds=(lt*lt-Math.max(0,lt-dt)**2)*u*7;
+  const rx=W/2,ry=lerp(H*.66,H*.47,sm(lt/4)),alt=cl(s/(u*200)),k=T>3?Math.max(0,1-lt/10)*u*.07:0;
+  ctx.save();ctx.translate(gs()*k,gs()*k);
+  const a=alt,b=a**.6;let g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,`rgb(${lerp(60,0,a)|0},${lerp(130,0,a)|0},${lerp(225,0,a)|0})`);g.addColorStop(1,`rgb(${lerp(190,0,b)|0},${lerp(222,0,b)|0},${lerp(255,0,b)|0})`);
+  ctx.fillStyle=g;ctx.fillRect(-20,-20,W+40,H+40);
+  stars(T,cl((alt-.3)*2),s*.01);
+  const gY=ry+2.3*u+s;
+  for(const c of clouds){const y=gY-c.h*U/700;if(y<-200||y>H+200)continue;
+    ctx.save();ctx.translate(c.x*W,y);ctx.scale(1,.38);const r=U*.2*c.r;
+    g=ctx.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,`rgba(255,255,255,${.75*(1-alt)})`);g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.fillRect(-r,-r,2*r,2*r);ctx.restore()}
+  if(gY<H){
+    g=ctx.createLinearGradient(0,gY,0,H);g.addColorStop(0,'#5a8a40');g.addColorStop(1,'#1f3518');ctx.fillStyle=g;ctx.fillRect(-20,gY,W+40,H-gY+20);
+    ctx.fillStyle='#707684';ctx.fillRect(W/2-3.2*u,gY,6.4*u,.4*u);ctx.fillStyle='#394050';ctx.fillRect(W/2-3.7*u,gY-7.5*u,.6*u,7.5*u);
+    for(let i=0;i<6;i++)ctx.fillRect(W/2-3.7*u,gY-(i*1.25+.7)*u,1.9*u,.12*u);
+  }
+  if(T>5.2){const e=sm((T-5.2)/5),ET=cl((T-5.2)/21),ER=lerp(W*2.3,U*.15,ET**.7),top=lerp(H*1.35,H*.8,e)-(T>10?lerp(0,H*.1,sm((T-10)/16)):0);
+    earth(lerp(W*.5,W*.2,sm(ET)),top+ER,ER)}
+  const mp=cl((T-9)/19),mr=U*.03*Math.pow(.42/.03,mp),mx=lerp(W*.78,W*.66,mp),my=lerp(H*.24,H*.3,mp);
+  if(T>=9)moon(mx,my,mr);
+  if(T>2.7&&T<9&&gY<H+200)for(let i=0;i<3;i++)puff.push({x:W/2+gs()*3.5*u,y:gY-.3*u,vx:gs()*u*.12,vy:-R()*u*.02,l:1,d:.008+R()*.01,r:u*(.8+R()),g:1.012,c:'236,236,242',a:.45,w:1});
+  drawPuff(dt,ds);
+  const ang=T>9?lerp(0,Math.atan2(mx-rx,ry-my),sm((T-9)/4)):0;
+  if(T>2.7&&T<17.5)emit(rx-2.2*u*Math.sin(ang),ry+2.2*u*Math.cos(ang),ang,T<3?2:T<16.5?9:Math.round(9*(17.5-T)),U*.012,u);
+  drawFire(dt,ds);
+  ctx.globalCompositeOperation='lighter';
+  if(T>2.7&&T<17.5){const nx=rx-2.2*u*Math.sin(ang),ny=ry+2.2*u*Math.cos(ang),f=T<17?1:17.5-T;g=ctx.createRadialGradient(nx,ny,0,nx,ny,u*5);g.addColorStop(0,`rgba(255,170,70,${.45*f})`);g.addColorStop(1,'rgba(255,90,20,0)');ctx.fillStyle=g;ctx.fillRect(nx-u*5,ny-u*5,u*10,u*10)}
+  ctx.globalCompositeOperation='source-over';
+  rocket(rx,ry+Math.sin(T*1.7)*u*.1,u,ang,0);
+  ctx.restore();
+}
+
+/* ---- Act 2: lunar landing ---- */
+function lunar(d,T,dt){
+  const u=U/15,gy=H*.72,yL=gy+H*.05-2.5*u,p=cl(d/14),y=lerp(-5*u,yL,1-Math.pow(1-p,2.2)),rx=W/2;
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);stars(T,1,0);earth(W*.18,H*.22,U*.07);
+  let g=ctx.createLinearGradient(0,gy-8,0,gy);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(255,255,255,.16)');ctx.fillStyle=g;ctx.fillRect(0,gy-8,W,8);
+  g=ctx.createLinearGradient(0,gy,0,H);g.addColorStop(0,'#9b9a95');g.addColorStop(.35,'#6c6b68');g.addColorStop(1,'#1d1d1f');ctx.fillStyle=g;ctx.fillRect(0,gy,W,H-gy);
+  for(const c of gc){const cy=gy+8+c.y*(H-gy-10),rr=c.s*U*(.015+c.y*.1);ctx.fillStyle='rgba(30,30,34,.4)';ctx.beginPath();ctx.ellipse(c.x*W,cy,rr,rr*.26,0,0,PI2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.16)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(c.x*W,cy-rr*.04,rr,rr*.26,0,Math.PI*1.05,Math.PI*1.95);ctx.stroke()}
+  const near=cl(1-(yL-y)/(10*u));
+  ctx.fillStyle=`rgba(0,0,0,${.45*near})`;ctx.beginPath();ctx.ellipse(rx,yL+2.5*u,(1.5+near)*u,.45*u,0,0,PI2);ctx.fill();
+  if(d<14.1){emit(rx,y+2.3*u,0,Math.round(7*(d<13.2?1:Math.max(0,14.1-d)/.9)),U*.011*(1-p*.5),u);
+    if(near>.15)for(let i=0;i<Math.round(near*5);i++){const s=R()<.5?-1:1;puff.push({x:rx+s*u*R()*1.5,y:yL+2.6*u,vx:s*(1+R()*5)*u*.05,vy:-R()*u*.012,l:1,d:.012+R()*.01,r:u*(.5+R()*.6),g:1.01,c:'165,165,160',a:.35,w:0})}}
+  if(d>13.8&&d<14.3)for(let i=0;i<8;i++){const s=R()<.5?-1:1;puff.push({x:rx+s*u*R()*1.5,y:yL+2.6*u,vx:s*(2+R()*6)*u*.05,vy:-R()*u*.015,l:1,d:.01+R()*.01,r:u*(.6+R()),g:1.012,c:'165,165,160',a:.4,w:0})}
+  drawFire(dt);
+  ctx.globalCompositeOperation='lighter';
+  if(d<14.1){const ny=y+2.3*u,f=d<13.2?1:Math.max(0,14.1-d)/.9;g=ctx.createRadialGradient(rx,ny,0,rx,ny,u*4);g.addColorStop(0,`rgba(255,175,80,${.4*f})`);g.addColorStop(1,'rgba(255,90,20,0)');ctx.fillStyle=g;ctx.fillRect(rx-u*4,ny-u*4,u*8,u*8)}
+  ctx.globalCompositeOperation='source-over';
+  rocket(rx,y,u,0,sm((d-2)/2));drawPuff(dt,0);
+  return{alt:Math.max(0,Math.round((yL-y)/u*30)),vel:Math.round(Math.min(60,Math.max(0,(yL-y)/u*.9)*(1-p)**1.2*3))};
+}
+
+/* ---- Show control ---- */
+const caps=[[0,.95,'T-minus 3'],[.95,1.95,'2'],[1.95,3,'1'],[3,7,'Ignition. We have liftoff.'],[7.5,11,'Leaving the atmosphere.'],[11.5,17,'Earth falls away behind us.'],[17.5,24.5,'Coasting toward the Moon.'],[24.5,28.5,'Lunar approach.'],[31,37,'Descent engine burning. Easy does it.'],[38,45,'Contact light. Touchdown.'],[46,80,'We are on the Moon.']];
+const capEl=document.getElementById('cap'),clk=document.getElementById('clk'),tel=document.getElementById('tel'),go=document.getElementById('go'),pz=document.getElementById('pz'),rp=document.getElementById('rp');
+let T=0,paused=false,last=performance.now(),ct='';
+const fmt=n=>n.toLocaleString('en-US'),pad=n=>String(n).padStart(2,'0');
+function draw(T,dt){
+  ctx.setTransform(dpr,0,0,dpr,0,0);let tl;
+  if(T<29)space(T,dt);else tl=lunar(T-29,T,dt);
+  const va=T>27.4&&T<29?sm((T-27.4)/1.6):T>=29&&T<30.6?1-sm((T-29)/1.6):0;
+  if(va>0){ctx.fillStyle=`rgba(0,0,0,${va})`;ctx.fillRect(0,0,W,H)}
+  const g=ctx.createRadialGradient(W/2,H/2,U*.35,W/2,H/2,Math.max(W,H)*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.6)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,H*.075);ctx.fillRect(0,H*.925,W,H*.075);
+  const c=caps.find(c=>T>=c[0]&&T<c[1]);
+  if(c){if(ct!==c[2]){ct=c[2];capEl.textContent=ct;capEl.className=T<3?'big':''}capEl.style.opacity=Math.min(1,(T-c[0])*3,(c[1]-T)*3)}else capEl.style.opacity=0;
+  const t=T-3;clk.textContent=`T${t<0?'−':'+'}${pad(Math.floor(Math.abs(t)/60))}:${pad(Math.floor(Math.abs(t)%60))}`;
+  if(tl)tel.textContent=`ALT ${fmt(tl.alt)} m  ·  VEL ${tl.vel} m/s`;
+  else{const e=sm((T-3)/26);tel.textContent=`DIST TO MOON ${fmt(Math.round(384400*(1-e)))} km  ·  VEL ${fmt(T<3?0:Math.round(T<17?Math.min(11000,(T-3)**1.6*200):lerp(11000,2300,(T-17)/12)))} m/s`}
+  rp.classList.toggle('hot',T>=46);
+}
+function reset(){T=0;fire.length=0;puff.length=0;ct='';paused=false;pz.textContent='Pause'}
+go.onclick=()=>location.assign('./app.html');pz.onclick=()=>{paused=!paused;pz.textContent=paused?'Play':'Pause'};rp.onclick=reset;
+function loop(n){const dt=Math.min(.05,(n-last)/1000);last=n;if(!paused)T=Math.min(T+dt,80);draw(T,paused?0:dt);requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
